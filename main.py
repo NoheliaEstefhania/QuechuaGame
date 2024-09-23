@@ -5,6 +5,8 @@ from pygame import mixer
 
 pygame.init()
 
+mixer.music.load('music.mp3')  # Reemplaza con el archivo de música que desees
+mixer.music.play(-1)
 screen = pygame.display.set_mode((800, 600))
 
 background = pygame.transform.scale(pygame.image.load('background.jpg'), (800, 600))
@@ -32,13 +34,20 @@ enemyX_change = []
 enemyY_change = []
 num_of_enemies = 6
 
-enemy_images = ['assets/cat.png', 'assets/dog.png', 'assets/fox.png', 'assets/dove.png', 'assets/star.png', 'assets/full-moon.png']
-
 # static positions
 static_positions = [(20, 100), (100, 120), (200, 140), (300, 160), (450, 180), (600, 200)]
 
+
+animal_images = ['assets/cat.png', 'assets/dog.png', 'assets/fox.png', 'assets/dove.png', 'assets/star.png', 'assets/full-moon.png']
+
+
 # animal names in Quechua
 animal_names = ['michi', 'alqo', 'atoq', 'urpi', 'chaska', 'killa']
+
+
+# Crear el diccionario
+animal_dict = dict(zip(animal_names, animal_images))
+
 
 # random animal to show
 current_animal = random.choice(animal_names)
@@ -59,9 +68,8 @@ def show_lives():
     screen.blit(lives_text, (350, 10))  # Posicionada en el centro superior de la pantalla
 
 
-
-for i in range(num_of_enemies):
-    enemy_original = pygame.image.load(enemy_images[i])
+for i, (animal_name, image_path) in enumerate(animal_dict.items()):
+    enemy_original = pygame.image.load(animal_images[i])
     enemy_width = enemy_original.get_width()
     enemy_height = enemy_original.get_height()
     #resize img
@@ -114,13 +122,10 @@ def fire_bullet(x, y):
 
 def isCollision(enemyX, enemyY, bulletX, bulletY):
     distance = math.sqrt((math.pow(enemyX - bulletX, 2)) + (math.pow(enemyY - bulletY, 2)))
-    if distance < 27:
-        return True
-    else:
-        return False
+    return  distance < 27
 
-current_animal = random.choice(animal_names)
-current_animal_index = animal_names.index(current_animal)
+#current_animal = random.choice(animal_names)
+#current_animal_index = animal_names.index(current_animal)
 
 def show_animal_name():
     #random word in the screen
@@ -133,14 +138,12 @@ def show_animal_name():
 used_animals = []
 # choose new word
 def choose_new_animal():
-    available_animals = [animal for animal in animal_names if animal not in used_animals]
-    if available_animals:
-        current_animal = random.choice(available_animals)
-        current_animal_index = animal_names.index(current_animal)  # original index
-        used_animals.append(current_animal)  
-        return current_animal, current_animal_index
+    if animal_dict:
+        current_animal = random.choice(list(animal_dict.keys()))
+        return current_animal
     else:
-        return None, None 
+        return None
+
     
 # winner sms
 def show_victory_text():
@@ -189,7 +192,8 @@ while running:
         playerX = 736
 
     # Enemy movement
-    for i in range(num_of_enemies):
+    i = 0
+    while i < len(enemyX):
         # Game Over
         if lives == 0:
             game_over_text()
@@ -203,7 +207,7 @@ while running:
             enemyX_change[i] = -0.05
             enemyY[i] += enemyY_change[i]
 
-        # Collision
+        # Manejando colisiones
         collision = isCollision(enemyX[i], enemyY[i], bulletX, bulletY)
         if collision:
             explosion_Sound = mixer.Sound('explosion.mp3')
@@ -211,22 +215,53 @@ while running:
             bulletY = 480
             bullet_state = "ready"
 
-            if i == current_animal_index:
-                correct_counter += 1  # correct
+            if list(animal_dict.keys()).index(current_animal) == i:
+                correct_counter += 1  # correcto
                 score_value = correct_counter
                 print(f"¡Correcto! Contador: {correct_counter}")
-                current_animal, current_animal_index = choose_new_animal()
-                if current_animal is None:
+                del animal_dict[current_animal]  # Eliminar la palabra del diccionario
+                # Elegir un nuevo animal
+                if animal_dict:
+                    current_animal = choose_new_animal()
+                else:
                     print("¡Todas las palabras han sido adivinadas!")
-                    game_won = True  
-            else:
-                #incorrect_counter += 1
-                lives -= 1
 
-            # Mover el enemigo fuera de la pantalla
-            enemyY[i] = 2000
+                    show_victory_text()
+                    running= False
+                    break
+                            # Eliminar el enemigo y actualizar listas
+                enemyImg.pop(i)
+                enemyX.pop(i)
+                enemyY.pop(i)
+                enemyX_change.pop(i)
+                enemyY_change.pop(i)
+                num_of_enemies -= 1
+
+                # No incrementar `i`, ya que el siguiente enemigo ahora está en la misma posición
+                continue
+            else:
+                lives -= 1
+                                # Eliminar el enemigo incorrecto
+                del animal_dict[list(animal_dict.keys())[i]]
+                enemyImg.pop(i)
+                enemyX.pop(i)
+                enemyY.pop(i)
+                enemyX_change.pop(i)
+                enemyY_change.pop(i)
+                num_of_enemies -= 1
+                            # Elegir un nuevo animal para reemplazar al incorrecto
+                if animal_dict:
+                    current_animal = choose_new_animal()
+                else:
+                    print("¡Todas las palabras han sido adivinadas!")
+                    show_victory_text()
+                    running= False
+                    break
+                continue
+
 
         enemy(enemyX[i], enemyY[i], i)
+        i += 1
 
     # Bullet movement
     if bulletY <= 0:
