@@ -47,6 +47,18 @@ current_animal_index = animal_names.index(current_animal)
 # counts
 correct_counter = 0
 incorrect_counter = 0
+#lives
+lives = 3 
+
+# Game Over text
+over_font = pygame.font.Font('freesansbold.ttf', 64)
+
+# Nueva función para mostrar el contador de vidas
+def show_lives():
+    lives_text = font.render("Lives: " + str(lives), True, (255, 0, 0))
+    screen.blit(lives_text, (350, 10))  # Posicionada en el centro superior de la pantalla
+
+
 
 for i in range(num_of_enemies):
     enemy_original = pygame.image.load(enemy_images[i])
@@ -179,7 +191,7 @@ while running:
     # Enemy movement
     for i in range(num_of_enemies):
         # Game Over
-        if incorrect_counter == 3:
+        if lives == 0:
             game_over_text()
             break
 
@@ -201,11 +213,15 @@ while running:
 
             if i == current_animal_index:
                 correct_counter += 1  # correct
+                score_value = correct_counter
                 print(f"¡Correcto! Contador: {correct_counter}")
                 current_animal, current_animal_index = choose_new_animal()
                 if current_animal is None:
                     print("¡Todas las palabras han sido adivinadas!")
                     game_won = True  
+            else:
+                #incorrect_counter += 1
+                lives -= 1
 
             # Mover el enemigo fuera de la pantalla
             enemyY[i] = 2000
@@ -222,6 +238,7 @@ while running:
 
 
     player(playerX, playerY)
+    show_lives()
 
     show_score(textX, textY)
     show_animal_name()  
