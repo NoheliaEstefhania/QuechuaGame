@@ -15,3 +15,5 @@ Fundamentos y Entorno de Desarrollo para Videojuegos
 ## Docente(s):
 - **José Alfredo Sulla Torres**
 
+## Presentación del Juego:
+![Presentación del Juego](assets/game.png)
